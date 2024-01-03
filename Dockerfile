@@ -3,8 +3,8 @@ LABEL maintainer="Rostislav Velichko <rostislav.vel@gmail.com>"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Moscow
-RUN apt update > /dev/null 
-RUN apt install -y \
+RUN apt update -qq > /dev/null 
+RUN apt install -qq -y \
 	apt-utils git tzdata locales pip curl \
  	pkg-config cmake g++ libcurl4-openssl-dev \
 	libmicrohttpd-dev libmongo-client-dev libgtest-dev 
@@ -35,5 +35,12 @@ ENV EMSDK_NODE="${WD}/node/$(ls)/bin/node"
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt install -y nodejs
 RUN npm i -g @quasar/cli
+RUN npm i -g pinia
+
+# Настройка ssh доступа для отладчика gdb.
+RUN apt-get -y install openssh-server sudo rsync
+RUN useradd -rm -d /home/sshuser -s /bin/bash -g root -G sudo -u 1000 sshuser 
+RUN echo 'sshuser:sshuser' | chpasswd
+RUN mkdir -p /home/sshuser/.ssh
 
 WORKDIR /Aerobike
