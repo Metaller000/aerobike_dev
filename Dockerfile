@@ -49,7 +49,7 @@ ENV EMSDK_NODE="${WD}/node/$(ls)/bin/node"
 # quasar install
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt install -y nodejs
-RUN npm i -g vue
+RUN npm i -g @vue/cli
 
 # Настройка ssh доступа для отладчика gdb.
 RUN useradd -rm -d /home/sshuser -s /bin/bash -g root -G sudo -u 1000 sshuser 
