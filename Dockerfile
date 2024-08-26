@@ -3,8 +3,8 @@ LABEL maintainer="Rostislav Velichko <rostislav.vel@gmail.com>"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Moscow
-RUN apt update -qq > /dev/null && \
-    apt install  -qq -y \
+RUN apt update 
+RUN apt install -y \
 	apt-utils \
 	tzdata \
 	locales \
@@ -19,16 +19,20 @@ RUN apt update -qq > /dev/null && \
 	libmongo-client-dev \
 	libgtest-dev \
 	libwebsockets-dev \
-	openssh-server \
-	sudo \
-	rsync \
-	> /dev/null
+	openssh-server \	
+	rsync \ 
+	bash-completion \
+	net-tools \
+	language-pack-ru
 
-RUN sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
-ENV LANG=ru_RU.UTF-8
-ENV LC_ALL=ru_RU.UTF-8
-ENV LANGUAGE=ru_RU:en
-
+ENV LANGUAGE ru_RU.UTF-8
+ENV LANG ru_RU.UTF-8
+ENV LC_ALL ru_RU.UTF-8
+RUN locale-gen ru_RU.UTF-8 && dpkg-reconfigure locales
+ENV TERM=xterm-256color
+RUN echo "PS1='\e[92m\u\e[0m@\e[94m\h\e[0m:\e[35m\w\e[0m# '" >> /root/.bashrc
+RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> /root/.bashrc
+	
 # gtest install
 RUN cd /usr/src/gtest && cmake CMakeLists.txt && make && cp lib/*.a /usr/lib
 
@@ -51,9 +55,16 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt install -y nodejs
 RUN npm i -g @vue/cli
 
-# Настройка ssh доступа для отладчика gdb.
-RUN useradd -rm -d /home/sshuser -s /bin/bash -g root -G sudo -u 1000 sshuser 
-RUN echo 'sshuser:sshuser' | chpasswd
-RUN mkdir -p /home/sshuser/.ssh
+# Настройка vscode web.
+RUN curl -fOL https://github.com/coder/code-server/releases/download/v4.91.1/code-server_4.91.1_amd64.deb \ 
+ && dpkg -i code-server_4.91.1_amd64.deb \
+ && rm code-server_4.91.1_amd64.deb \
+ && code-server --install-extension ms-ceintl.vscode-language-pack-ru
+
+RUN echo "bind-addr: 0.0.0.0:666" > /root/.config/code-server/config.yaml \
+ && echo "cert: false" >> /root/.config/code-server/config.yaml \
+ && echo '{ "workbench.colorTheme": "Default Dark Modern" }' > /root/.local/share/code-server/User/settings.json
 
 WORKDIR /Aerobike
+
+ENTRYPOINT code-server --disable-workspace-trust --auth none --locale ru --open /Aerobike
